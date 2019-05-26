@@ -6,17 +6,19 @@
 
     <div v-for="(item, index) in comments" :data-id="item.id" class="comments">
       <p class="content circle-1">{{ item.content }}</p>
-      <time class="time">{{ item.createdAt.toDate().toLocaleString() }}</time>
+      <time class="time">{{ item.timestamp.toDate().toLocaleString() }}</time>
+      <!-- <div class="location">{{ item.location }}</div> -->
     </div>
 
     <footer class="footer">
-      <textarea class="textarea" v-model="inputComment" maxlength="31" rows="5" placeholder="なにを刻む？" required autofocus></textarea>
-      <button type="button" class="button" :disabled="!inputComment" @click="add">送信</button>
+      <textarea class="textarea" v-model="inputComment" maxlength="31" rows="2" placeholder="なにを刻む？" required autofocus></textarea>
+      <button type="button" class="button" :disabled="!inputComment" @click="addComment">送信</button>
     </footer>
   </div>
 </template>
 
 <script>
+import firebase from 'firebase/app'
 import db from '@/plugins/firebase'
 
 export default {
@@ -25,34 +27,53 @@ export default {
     return {
       inputComment: '',
       comments: [],
+      geo: {
+        lat: '', // 緯度
+        long: '', // 経度
+      }
     }
   },
 
   firestore() {
      return {
-       comments: db.collection('comments').orderBy('createdAt')
+       comments: db.collection('comments').orderBy('timestamp')
      }
    },
 
   created() {
-    // db.collection('comments').add({ content: 'test'})
-    // db.collection('comments').doc(id).delete()
+    this.getGeo()
   },
 
   methods: {
-    add() {
-      const now = new Date()
-
+    addComment() {
+      console.log(this.geo.lat)
       db.collection('comments').add({
         content: this.inputComment,
-        createdAt: now
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        location: new firebase.firestore.GeoPoint(this.geo.lat, this.geo.long),
       }).then((docRef) => {
-        this.inputComment = ''
-        console.log("Document written with ID: ", docRef.id)
+        this.resetComment()
+        console.log('Document written with ID: ', docRef.id)
       })
       .catch((error) => {
-        console.error("Error adding document: ", error)
-      });
+        console.error('Error adding document: ', error)
+      })
+    },
+
+    resetComment() {
+      this.inputComment = ''
+    },
+
+    getGeo() {
+      const vm = this
+
+      navigator.geolocation.getCurrentPosition((position) => {
+        vm.geo.lat = position.coords.latitude
+        vm.geo.long = position.coords.longitude
+      }),
+      (error) => {
+        console.error('位置情報取得失敗', error)
+      }
     }
   },
 }
@@ -106,8 +127,13 @@ export default {
 }
 
 .footer {
+  width: 100%;
+  background-color: #eee;
   text-align: center;
-  display: fixed;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
   bottom: 0;
 }
 </style>
