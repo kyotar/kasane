@@ -1,0 +1,24 @@
+@import './lib/normalize';
+@import './setting/config';
+
+.textarea {
+  padding: 8px;
+  border: 1px solid rgba($color-black, .2);
+  border-radius: 4px;
+  font-size: $font-m;
+  resize: none;
+}
+
+.button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background-color: $color-primary;
+  font-size: $font-s;
+  font-weight: bold;
+
+  &[disabled] {
+    color: rgba($color-black, 0.4);
+    background-color: rgba($color-black, 0.2);
+  }
+}
